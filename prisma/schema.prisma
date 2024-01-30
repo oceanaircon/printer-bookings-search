@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  password String
+  name     String?
+}
+
+model Printer {
+  id          Int           @id @default(autoincrement())
+  category    Category      @relation(fields: [categoryId], references: [id])
+  categoryId  Int
+  serial      String        @unique
+  name        String
+  description String?
+  status      PrinterStatus @default(SZABAD)
+  Booking     Booking?
+}
+
+model Category {
+  id      Int       @id @default(autoincrement())
+  name    String
+  fee     Int
+  Printer Printer[]
+}
+
+model Booker {
+  id        Int       @id @default(autoincrement())
+  name      String
+  address   String    @default("1086 Budapest, Vas utca 1.")
+  taxnumber String    @default("1234567812345678")
+  phone     String    @default("+36 00 0000000")
+  email     String    @unique
+  Booking   Booking[]
+}
+
+model Booking {
+  id        Int         @id @default(autoincrement())
+  booker    Booker      @relation(fields: [bookerId], references: [id])
+  bookerId  Int
+  printer   Printer     @relation(fields: [printerId], references: [id])
+  printerId Int         @unique
+  createdAt DateTime    @default(now())
+  discount  Int         @default(0)
+  Worksheet Worksheet[]
+}
+
+model Service {
+  id        Int         @id @default(autoincrement())
+  name      String      @default("Teszt Munka")
+  Worksheet Worksheet[]
+}
+
+model Worksheet {
+  id                 Int             @id @default(autoincrement())
+  booking            Booking         @relation(fields: [bookingId], references: [id])
+  bookingId          Int
+  service            Service         @relation(fields: [serviceId], references: [id])
+  serviceId          Int
+  errorReportingTime DateTime        @default(now())
+  repairDeadline     DateTime
+  status             WorksheetStatus @default(FOLYAMATBAN)
+}
+
+enum WorksheetStatus {
+  FOLYAMATBAN
+  BEFEJEZETT
+}
+
+enum PrinterStatus {
+  SZABAD
+  FOGLALT
+}
